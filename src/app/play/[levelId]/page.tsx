@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { X, Heart, CheckCircle2, XCircle, ArrowRight, Trophy } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -9,7 +9,7 @@ import LetterBoxPuzzle from '@/components/game/LetterBoxPuzzle';
 import FillBlankPuzzle from '@/components/game/FillBlankPuzzle';
 import { saveGuestLevelComplete } from '@/lib/utils/guestStorage';
 
-export default function PlayLevelPage() {
+function PlayLevelContent() {
   const params = useParams();
   const router = useRouter();
   const supabase = createClient();
@@ -72,7 +72,6 @@ export default function PlayLevelPage() {
       setStatus('idle');
       setRevealedAnswer(null);
     } else {
-      // Hoàn thành màn chơi -> Lưu tiến độ & cộng XP
       setIsFinished(true);
       const xpReward = level?.xp_reward ?? 20;
       const { data: { user } } = await supabase.auth.getUser();
@@ -107,7 +106,6 @@ export default function PlayLevelPage() {
     );
   }
 
-  // Màn hình hết mạng sống
   if (hearts === 0) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center gap-6">
@@ -134,7 +132,6 @@ export default function PlayLevelPage() {
     );
   }
 
-  // Màn hình hoàn thành màn chơi
   if (isFinished) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center gap-6">
@@ -158,7 +155,6 @@ export default function PlayLevelPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-between">
-      {/* Thanh tiến trình & Tim */}
       <div className="max-w-3xl w-full mx-auto px-4 pt-6 flex items-center gap-4">
         <button
           onClick={() => router.push('/')}
@@ -180,7 +176,6 @@ export default function PlayLevelPage() {
         </div>
       </div>
 
-      {/* Khu vực câu hỏi */}
       <main className="max-w-2xl w-full mx-auto px-4 my-auto py-8">
         {currentQuestion?.type === 'letter_boxes' && currentQuestion.slots && (
           <LetterBoxPuzzle
@@ -204,7 +199,6 @@ export default function PlayLevelPage() {
         )}
       </main>
 
-      {/* Thanh phản hồi dưới đáy màn hình kiểu Duolingo */}
       <footer
         className={`border-t-2 transition-colors duration-200 ${
           status === 'correct'
@@ -262,5 +256,19 @@ export default function PlayLevelPage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function PlayLevelPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center font-bold text-slate-500">
+          Đang chuẩn bị câu đố...
+        </div>
+      }
+    >
+      <PlayLevelContent />
+    </Suspense>
   );
 }
